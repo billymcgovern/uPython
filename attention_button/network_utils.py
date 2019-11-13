@@ -6,8 +6,8 @@ import utime as time
 def connect(ssid, password):
     nic = network.WLAN(network.STA_IF)
 
-    if nic.active():
-        nic.disconnect()
+    if nic.active() and nic.isconnected():
+        return True, nic
 
     network_connect_start_time = time.ticks_ms()
 
@@ -50,8 +50,15 @@ def connect(ssid, password):
     return False, nic
 
 def connect_any():
+    nic = network.WLAN(network.STA_IF)
+    if not nic.active():
+        nic.active(True)
+
+    available_networks = [ssid for ssid, bssid, channel, RSSI, authmode, hidden in nic.scan()]
     
     for ssid, password in constants.known_networks:
+        if not bytes(ssid, 'utf-8') in available_networks:
+            continue
         result, nic = connect(ssid, password)
         if result:
             return True, nic
